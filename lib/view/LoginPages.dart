@@ -1,32 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:get/get.dart';
 import 'package:untitled/database/data.dart';
 import 'package:untitled/view/couunt.dart';
+import 'package:untitled/viewmodel/riverpod.dart';
 
 
-class LoginScreen extends StatefulWidget {
-  @override
-  _LoginScreenState createState() => _LoginScreenState();
-}
-
-class _LoginScreenState extends State<LoginScreen> {
+class LoginScreen extends ConsumerWidget {
   final TextEditingController _usernameController = TextEditingController();
 
-  Future<void> _login() async {
+  Future<void> _login(BuildContext context, WidgetRef ref) async {
     String username = _usernameController.text.trim();
     if (username.isNotEmpty) {
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.setString('username', username); // Save username
-      await DatabaseHelper().insertUser(username); // Insert user into DB
-      Get.off(() => CounterScreen(username: username)); // Navigate to CounterScreen
-    } else {
-      Get.snackbar("Error", "Username cannot be empty");
+      await prefs.setString('username', username);
+
+      await DatabaseHelper().insertUser(username);
+      ref.read(userProvider.notifier).state = username;
+      ref.read(counterProvider.notifier).resetUser();
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => CounterScreen(username: username)),
+      );
     }
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       appBar: AppBar(title: Text("Login")),
       body: Padding(
@@ -39,7 +40,10 @@ class _LoginScreenState extends State<LoginScreen> {
               decoration: InputDecoration(labelText: "Enter Username"),
             ),
             SizedBox(height: 20),
-            ElevatedButton(onPressed: _login, child: Text("Login")),
+            ElevatedButton(
+              onPressed: () => _login(context, ref),
+              child: Text("Login"),
+            ),
           ],
         ),
       ),

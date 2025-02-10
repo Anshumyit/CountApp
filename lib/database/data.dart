@@ -32,7 +32,7 @@ class DatabaseHelper {
     await db.insert(
       'users',
       {'username': username, 'counter': 0},
-      conflictAlgorithm: ConflictAlgorithm.ignore, // Ignore if user exists
+      conflictAlgorithm: ConflictAlgorithm.ignore,
     );
   }
 
